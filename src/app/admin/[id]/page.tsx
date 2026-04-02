@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
-import { formatPriceInput } from "../../lib/price";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "../../../lib/supabase";
+import { formatPriceInput } from "../../../lib/price";
 
 function slugify(text: string) {
   return text
@@ -16,18 +17,53 @@ function slugify(text: string) {
     .replace(/-+/g, "-");
 }
 
-export default function CreatePage() {
+export default function AdminEditPage() {
+  const params = useParams<{ id: string }>();
   const router = useRouter();
+  const id = String(params?.id ?? "");
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  async function loadItem() {
+    if (!id) return;
+
+    setLoading(true);
+    setMessage("");
+
+    const { data, error } = await supabase
+      .from("pages")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) {
+      setMessage("Erro ao carregar página.");
+      setLoading(false);
+      return;
+    }
+
+    setTitle(data.title ?? "");
+    setSlug(data.slug ?? "");
+    setPrice(formatPriceInput(data.price ?? ""));
+    setDescription(data.description ?? "");
+    setImageUrl(data.image_url ?? "");
+    setWhatsappNumber(data.whatsapp_number ?? "");
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadItem();
+  }, [id]);
 
   async function handleUploadImage() {
     if (!imageFile) {
@@ -64,64 +100,97 @@ export default function CreatePage() {
     }
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setMessage("");
 
-    const baseSlug = slugify(title);
+    const finalSlug = slugify(slug || title);
 
-    if (!baseSlug) {
-      setMessage("Digite um nome válido para o produto.");
-      setLoading(false);
+    if (!finalSlug) {
+      setMessage("Digite um slug ou nome válido.");
+      setSaving(false);
       return;
     }
 
     if (!imageUrl.trim()) {
       setMessage("Envie uma imagem ou cole uma URL.");
-      setLoading(false);
+      setSaving(false);
       return;
     }
 
-    let finalSlug = baseSlug;
-
-    const payload = {
-      title: title.trim(),
-      price: formatPriceInput(price),
-      description: description.trim(),
-      image_url: imageUrl.trim(),
-      whatsapp_number: whatsappNumber.trim(),
-      slug: finalSlug,
-    };
-
-    let { error } = await supabase.from("pages").insert([payload]);
-
-    if (error && error.code === "23505") {
-      finalSlug = `${baseSlug}-${Date.now().toString().slice(-6)}`;
-
-      const retry = await supabase.from("pages").insert([
-        {
-          ...payload,
-          slug: finalSlug,
-        },
-      ]);
-
-      error = retry.error;
-    }
+    const { error } = await supabase
+      .from("pages")
+      .update({
+        title: title.trim(),
+        slug: finalSlug,
+        price: formatPriceInput(price),
+        description: description.trim(),
+        image_url: imageUrl.trim(),
+        whatsapp_number: whatsappNumber.trim(),
+      })
+      .eq("id", id);
 
     if (error) {
       setMessage("Erro ao salvar: " + error.message);
-      setLoading(false);
+      setSaving(false);
       return;
     }
 
-    router.push(`/${finalSlug}`);
+    setSlug(finalSlug);
+    setPrice(formatPriceInput(price));
+    setMessage("Página atualizada com sucesso.");
+    setSaving(false);
+  }
+
+  async function handleLogout() {
+    await fetch("/api/admin-logout", { method: "POST" });
+    router.push("/admin-login");
+    router.refresh();
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          Carregando página...
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
       <div className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h1 className="mb-6 text-2xl font-bold">Criar página do produto</h1>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-zinc-400">Painel admin</p>
+            <h1 className="text-2xl font-bold">Editar página</h1>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin"
+              className="rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
+            >
+              Voltar
+            </Link>
+
+            <button
+              onClick={() => router.push(`/${slug}`)}
+              className="rounded-xl bg-green-500 px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
+            >
+              Abrir página
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="rounded-xl border border-red-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -130,9 +199,24 @@ export default function CreatePage() {
             </label>
             <input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTitle(value);
+                if (!slug) setSlug(slugify(value));
+              }}
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
-              placeholder="Ex: Escova Removedora de Pelos"
+              placeholder="Nome do produto"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">Slug</label>
+            <input
+              value={slug}
+              onChange={(e) => setSlug(slugify(e.target.value))}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="nome-do-produto"
               required
             />
           </div>
@@ -145,7 +229,6 @@ export default function CreatePage() {
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
               placeholder="Ex: R$ 49,90"
               inputMode="numeric"
-              required
             />
           </div>
 
@@ -156,9 +239,8 @@ export default function CreatePage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[120px] w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
-              placeholder="Descreva o produto"
-              required
+              className="min-h-[140px] w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="Descrição do produto"
             />
           </div>
 
@@ -215,21 +297,22 @@ export default function CreatePage() {
               onChange={(e) => setWhatsappNumber(e.target.value)}
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
               placeholder="5511999999999"
-              required
             />
           </div>
 
+          {message ? (
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-300">
+              {message}
+            </div>
+          ) : null}
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={saving}
             className="w-full rounded-xl bg-green-500 px-5 py-3 font-medium text-black transition hover:opacity-90 disabled:opacity-60"
           >
-            {loading ? "Salvando..." : "Criar página"}
+            {saving ? "Salvando..." : "Salvar alterações"}
           </button>
-
-          {message ? (
-            <p className="text-sm text-zinc-300">{message}</p>
-          ) : null}
         </form>
       </div>
     </main>
