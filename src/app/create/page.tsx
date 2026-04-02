@@ -1,167 +1,160 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabase";
+
+function slugify(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
 
 export default function CreatePage() {
+  const router = useRouter();
+
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [ctaText, setCtaText] = useState("Comprar agora");
   const [imageUrl, setImageUrl] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    const baseSlug = slugify(title);
+
+    if (!baseSlug) {
+      setMessage("Digite um nome válido para o produto.");
+      setLoading(false);
+      return;
+    }
+
+    let finalSlug = baseSlug;
+
+    const payload = {
+      title: title.trim(),
+      price: price.trim(),
+      description: description.trim(),
+      image_url: imageUrl.trim(),
+      whatsapp_number: whatsappNumber.trim(),
+      slug: finalSlug,
+    };
+
+    let { error } = await supabase.from("pages").insert([payload]);
+
+    if (error && error.code === "23505") {
+      finalSlug = `${baseSlug}-${Date.now().toString().slice(-6)}`;
+
+      const retry = await supabase.from("pages").insert([
+        {
+          ...payload,
+          slug: finalSlug,
+        },
+      ]);
+
+      error = retry.error;
+    }
+
+    if (error) {
+      setMessage("Erro ao salvar: " + error.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push(`/${finalSlug}`);
+  }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-white">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between gap-4">
+    <main className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100">
+      <div className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <h1 className="mb-6 text-2xl font-bold">Criar página do produto</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <p className="text-sm text-zinc-400">Criar página</p>
-            <h1 className="text-3xl font-bold">Monte sua página de venda</h1>
+            <label className="mb-1 block text-sm text-zinc-300">
+              Nome do produto
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="Ex: Escova Removedora de Pelos"
+              required
+            />
           </div>
 
-          <Link
-            href="/"
-            className="rounded-xl border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-900"
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">Preço</label>
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="Ex: R$ 49,90"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">
+              Descrição
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-[120px] w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="Descreva o produto"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">
+              URL da imagem
+            </label>
+            <input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="https://..."
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">
+              WhatsApp
+            </label>
+            <input
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+              placeholder="5511999999999"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-green-500 px-5 py-3 font-medium text-black transition hover:opacity-90 disabled:opacity-60"
           >
-            Voltar
-          </Link>
-        </div>
+            {loading ? "Salvando..." : "Criar página"}
+          </button>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <h2 className="mb-6 text-xl font-semibold">Dados do produto</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">
-                  Nome do produto
-                </label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Mini liquidificador portátil"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">Preço</label>
-                <input
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Ex: R$ 79,90"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">
-                  Descrição
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descreva o produto e os benefícios"
-                  rows={5}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">
-                  Número do WhatsApp
-                </label>
-                <input
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="Ex: 5564999999999"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">
-                  Texto do botão
-                </label>
-                <input
-                  value={ctaText}
-                  onChange={(e) => setCtaText(e.target.value)}
-                  placeholder="Ex: Comprar agora"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-zinc-300">
-                  URL da imagem
-                </label>
-                <input
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-zinc-500"
-                />
-              </div>
-
-              <button
-                type="button"
-                className="mt-2 w-full rounded-xl bg-white px-5 py-3 font-medium text-black opacity-70"
-              >
-                Criar página
-              </button>
-
-              <p className="text-sm text-zinc-500">
-                Neste passo o botão ainda não salva. Vamos ligar no banco no próximo bloco.
-              </p>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <h2 className="mb-6 text-xl font-semibold">Prévia</h2>
-
-            <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-              <div className="aspect-video w-full bg-zinc-900">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={title || "Imagem do produto"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-                    Sua imagem vai aparecer aqui
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6">
-                <h3 className="text-2xl font-bold">
-                  {title || "Nome do produto"}
-                </h3>
-
-                <p className="mt-3 text-3xl font-semibold text-green-400">
-                  {price || "R$ 0,00"}
-                </p>
-
-                <p className="mt-4 whitespace-pre-line text-zinc-300">
-                  {description || "A descrição do produto vai aparecer aqui."}
-                </p>
-
-                <button
-                  type="button"
-                  className="mt-6 w-full rounded-xl bg-white px-5 py-3 font-medium text-black"
-                >
-                  {ctaText || "Comprar agora"}
-                </button>
-
-                <p className="mt-3 text-center text-sm text-zinc-500">
-                  WhatsApp: {whatsapp || "não informado"}
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
+          {message ? (
+            <p className="text-sm text-red-400">{message}</p>
+          ) : null}
+        </form>
       </div>
     </main>
   );
