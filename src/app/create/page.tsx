@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { formatPriceInput } from "../../lib/price";
@@ -27,6 +27,7 @@ type InsertedPage = {
 
 export default function CreatePage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
@@ -200,20 +201,35 @@ export default function CreatePage() {
             </label>
 
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
               onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-              className="mb-3 block w-full text-sm"
+              className="hidden"
             />
 
-            <button
-              type="button"
-              onClick={handleUploadImage}
-              disabled={uploadingImage || !imageFile}
-              className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800 disabled:opacity-60"
-            >
-              {uploadingImage ? "Enviando imagem..." : "Enviar imagem"}
-            </button>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800"
+              >
+                Escolher imagem
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUploadImage}
+                disabled={uploadingImage || !imageFile}
+                className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800 disabled:opacity-60"
+              >
+                {uploadingImage ? "Enviando imagem..." : "Enviar imagem"}
+              </button>
+            </div>
+
+            <p className="text-sm text-zinc-400">
+              {imageFile ? imageFile.name : "Nenhuma imagem escolhida"}
+            </p>
 
             {imageUrl ? (
               <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-800">

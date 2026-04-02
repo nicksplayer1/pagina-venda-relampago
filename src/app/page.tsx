@@ -1,6 +1,9 @@
 import Link from "next/link";
 import MyPagesSection from "../components/MyPagesSection";
 
+const feedbackHref =
+  "mailto:alphanicks1@gmail.com?subject=Feedback%20do%20site&body=Oi!%20Quero%20deixar%20um%20feedback%20sobre%20o%20site.";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -13,14 +16,12 @@ export default function HomePage() {
             </h1>
           </div>
 
-          <div className="flex gap-2">
-            <Link
-              href="/create"
-              className="rounded-xl bg-green-500 px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
-            >
-              Criar página
-            </Link>
-          </div>
+          <a
+            href="#feedback"
+            className="rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
+          >
+            Feedback
+          </a>
         </div>
       </section>
 
@@ -87,7 +88,7 @@ export default function HomePage() {
         <MyPagesSection />
       </section>
 
-      <section id="como-funciona" className="px-4 py-8 md:px-6 md:py-12">
+      <section className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2">
           <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
             <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
@@ -125,54 +126,31 @@ export default function HomePage() {
               Ideal para catálogo rápido, produto único, promoção, afiliado,
               dropshipping, vendas por direct ou campanhas com link curto.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/create"
-                className="rounded-2xl bg-green-500 px-6 py-4 text-center text-base font-semibold text-black transition hover:opacity-90"
-              >
-                Criar página agora
-              </Link>
-
-              <Link
-                href="#minhas-paginas"
-                className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
-              >
-                Minhas páginas
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-8 md:px-6 md:py-12">
+      <section id="feedback" className="px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl rounded-[36px] border border-zinc-800 bg-zinc-900 px-6 py-12 text-center md:px-10">
           <p className="text-sm uppercase tracking-[0.2em] text-zinc-500">
-            Comece agora
+            Feedback
           </p>
 
           <h3 className="mt-3 text-3xl font-bold md:text-5xl">
-            Gere sua próxima página em minutos
+            Encontrou algo para melhorar?
           </h3>
 
           <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
-            Um fluxo direto para criar, compartilhar e converter melhor.
+            Seu feedback ajuda a deixar a ferramenta melhor e mais simples de usar.
           </p>
 
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href="/create"
+          <div className="mt-8 flex justify-center">
+            <a
+              href={feedbackHref}
               className="rounded-2xl bg-green-500 px-6 py-4 text-center text-base font-semibold text-black transition hover:opacity-90"
             >
-              Criar minha página
-            </Link>
-
-            <Link
-              href="#minhas-paginas"
-              className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
-            >
-              Ver minhas páginas
-            </Link>
+              Enviar feedback
+            </a>
           </div>
         </div>
       </section>
