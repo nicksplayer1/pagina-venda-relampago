@@ -25,11 +25,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const data = await getPageBySlug(slug);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
   const pageUrl = `${siteUrl}/${slug}`;
 
   if (!data) {
     return {
+      metadataBase: new URL(siteUrl),
       title: "Página não encontrada",
       description: "Esta página não foi encontrada.",
       robots: {
@@ -42,12 +43,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = data.title || "Produto";
   const price = formatPriceDisplay(data.price);
   const description =
-    data.description?.trim() ||
-    `Confira ${title} e fale no WhatsApp para comprar.`;
+    (data.description?.trim() || `Confira ${title} e fale no WhatsApp para comprar.`).slice(0, 160);
 
-  const ogImage = data.image_url || `${siteUrl}/favicon.ico`;
+  const imageUrl = data.image_url || `${siteUrl}/favicon.ico`;
 
   return {
+    metadataBase: new URL(siteUrl),
     title: `${title} | ${price}`,
     description,
     alternates: {
@@ -59,9 +60,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: pageUrl,
       siteName: "Página de venda relâmpago",
       type: "website",
+      locale: "pt_BR",
       images: [
         {
-          url: ogImage,
+          url: imageUrl,
+          width: 1200,
+          height: 630,
           alt: title,
         },
       ],
@@ -70,7 +74,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: `${title} | ${price}`,
       description,
-      images: [ogImage],
+      images: [imageUrl],
     },
   };
 }
