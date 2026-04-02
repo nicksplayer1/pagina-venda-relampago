@@ -222,10 +222,10 @@ export default async function PublicPage({ params }: PageProps) {
               </a>
 
               <Link
-                href="/create"
+                href="/"
                 className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
               >
-                Criar outra página
+                Voltar ao início
               </Link>
             </div>
           </div>

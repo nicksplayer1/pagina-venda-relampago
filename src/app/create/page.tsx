@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { formatPriceInput } from "../../lib/price";
+import { saveCreatedPage } from "../../lib/my-pages";
 
 function slugify(text: string) {
   return text
@@ -15,6 +16,14 @@ function slugify(text: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 }
+
+type InsertedPage = {
+  id?: string;
+  title: string;
+  slug: string;
+  price?: string | null;
+  image_url?: string | null;
+};
 
 export default function CreatePage() {
   const router = useRouter();
@@ -64,6 +73,21 @@ export default function CreatePage() {
     }
   }
 
+  async function createWithPayload(payload: {
+    title: string;
+    price: string;
+    description: string;
+    image_url: string;
+    whatsapp_number: string;
+    slug: string;
+  }) {
+    return await supabase
+      .from("pages")
+      .insert([payload])
+      .select("id, title, slug, price, image_url")
+      .single();
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -94,25 +118,33 @@ export default function CreatePage() {
       slug: finalSlug,
     };
 
-    let { error } = await supabase.from("pages").insert([payload]);
+    let result = await createWithPayload(payload);
 
-    if (error && error.code === "23505") {
+    if (result.error && result.error.code === "23505") {
       finalSlug = `${baseSlug}-${Date.now().toString().slice(-6)}`;
-
-      const retry = await supabase.from("pages").insert([
-        {
-          ...payload,
-          slug: finalSlug,
-        },
-      ]);
-
-      error = retry.error;
+      result = await createWithPayload({
+        ...payload,
+        slug: finalSlug,
+      });
     }
 
-    if (error) {
-      setMessage("Erro ao salvar: " + error.message);
+    if (result.error) {
+      setMessage("Erro ao salvar: " + result.error.message);
       setLoading(false);
       return;
+    }
+
+    const inserted = result.data as InsertedPage | null;
+
+    if (inserted) {
+      saveCreatedPage(inserted);
+    } else {
+      saveCreatedPage({
+        title: payload.title,
+        slug: finalSlug,
+        price: payload.price,
+        image_url: payload.image_url,
+      });
     }
 
     router.push(`/${finalSlug}`);

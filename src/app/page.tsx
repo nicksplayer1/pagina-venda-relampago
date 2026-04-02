@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MyPagesSection from "../components/MyPagesSection";
 
 export default function HomePage() {
   return (
@@ -13,13 +14,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex gap-2">
-            <Link
-              href="/admin-login"
-              className="rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
-            >
-              Admin
-            </Link>
-
             <Link
               href="/create"
               className="rounded-xl bg-green-500 px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
@@ -55,10 +49,10 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="#como-funciona"
+              href="#minhas-paginas"
               className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
             >
-              Ver como funciona
+              Ver minhas páginas
             </Link>
           </div>
         </div>
@@ -87,6 +81,10 @@ export default function HomePage() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section id="minhas-paginas">
+        <MyPagesSection />
       </section>
 
       <section id="como-funciona" className="px-4 py-8 md:px-6 md:py-12">
@@ -137,10 +135,10 @@ export default function HomePage() {
               </Link>
 
               <Link
-                href="/admin-login"
+                href="#minhas-paginas"
                 className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
               >
-                Entrar no admin
+                Minhas páginas
               </Link>
             </div>
           </div>
@@ -170,10 +168,10 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/admin-login"
+              href="#minhas-paginas"
               className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
             >
-              Abrir admin
+              Ver minhas páginas
             </Link>
           </div>
         </div>
