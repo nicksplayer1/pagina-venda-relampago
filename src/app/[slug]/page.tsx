@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -9,16 +10,76 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export default async function PublicPage({ params }: PageProps) {
-  const { slug } = await params;
-
+async function getPageBySlug(slug: string) {
   const { data, error } = await supabase
     .from("pages")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error || !data) return null;
+  return data;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const data = await getPageBySlug(slug);
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const pageUrl = `${siteUrl}/${slug}`;
+
+  if (!data) {
+    return {
+      title: "Página não encontrada",
+      description: "Esta página não foi encontrada.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const title = data.title || "Produto";
+  const price = formatPriceDisplay(data.price);
+  const description =
+    data.description?.trim() ||
+    `Confira ${title} e fale no WhatsApp para comprar.`;
+
+  const ogImage = data.image_url || `${siteUrl}/favicon.ico`;
+
+  return {
+    title: `${title} | ${price}`,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: `${title} | ${price}`,
+      description,
+      url: pageUrl,
+      siteName: "Página de venda relâmpago",
+      type: "website",
+      images: [
+        {
+          url: ogImage,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${price}`,
+      description,
+      images: [ogImage],
+    },
+  };
+}
+
+export default async function PublicPage({ params }: PageProps) {
+  const { slug } = await params;
+  const data = await getPageBySlug(slug);
+
+  if (!data) {
     notFound();
   }
 
