@@ -43,6 +43,14 @@ export function saveCreatedPage(page: SavedPageItem) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+export function removeSavedPage(slug: string) {
+  if (typeof window === "undefined") return;
+
+  const current = getSavedPages();
+  const next = current.filter((item) => item.slug !== slug);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
 export function clearSavedPages() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(STORAGE_KEY);

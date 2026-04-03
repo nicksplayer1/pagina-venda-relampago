@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { clearSavedPages, getSavedPages, SavedPageItem } from "../lib/my-pages";
+import {
+  clearSavedPages,
+  getSavedPages,
+  removeSavedPage,
+  SavedPageItem,
+} from "../lib/my-pages";
 import { formatPriceDisplay } from "../lib/price";
 
 export default function MyPagesSection() {
   const [pages, setPages] = useState<SavedPageItem[]>([]);
   const [message, setMessage] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
     setPages(getSavedPages());
@@ -20,10 +26,29 @@ export default function MyPagesSection() {
     setTimeout(() => setMessage(""), 2000);
   }
 
-  function handleClear() {
+  function handleAskClear() {
+    setConfirmClear(true);
+  }
+
+  function handleCancelClear() {
+    setConfirmClear(false);
+  }
+
+  function handleConfirmClear() {
     clearSavedPages();
     setPages([]);
+    setConfirmClear(false);
     setMessage("Lista limpa.");
+    setTimeout(() => setMessage(""), 2000);
+  }
+
+  function handleRemoveOne(slug: string, title: string) {
+    const ok = window.confirm(`Remover "${title}" da lista deste navegador?`);
+    if (!ok) return;
+
+    removeSavedPage(slug);
+    setPages(getSavedPages());
+    setMessage("Página removida da lista.");
     setTimeout(() => setMessage(""), 2000);
   }
 
@@ -60,12 +85,30 @@ export default function MyPagesSection() {
             </p>
           </div>
 
-          <button
-            onClick={handleClear}
-            className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800"
-          >
-            Limpar lista
-          </button>
+          {confirmClear ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleConfirmClear}
+                className="rounded-xl bg-red-500 px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                Confirmar limpar
+              </button>
+
+              <button
+                onClick={handleCancelClear}
+                className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleAskClear}
+              className="rounded-xl border border-zinc-700 px-4 py-3 text-sm transition hover:bg-zinc-800"
+            >
+              Limpar lista
+            </button>
+          )}
         </div>
 
         {message ? (
@@ -80,7 +123,7 @@ export default function MyPagesSection() {
               key={item.slug}
               className="overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900"
             >
-              <div className="aspect-[4/3] bg-zinc-950">
+              <div className="relative aspect-[4/3] bg-zinc-950">
                 {item.image_url ? (
                   <img
                     src={item.image_url}
@@ -92,6 +135,15 @@ export default function MyPagesSection() {
                     Sem imagem
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => handleRemoveOne(item.slug, item.title)}
+                  className="absolute right-3 top-3 rounded-full border border-zinc-700 bg-zinc-950/90 px-3 py-2 text-xs transition hover:bg-zinc-800"
+                  title="Remover da lista"
+                >
+                  🗑
+                </button>
               </div>
 
               <div className="p-5">

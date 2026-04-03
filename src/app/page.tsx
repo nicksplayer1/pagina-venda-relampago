@@ -1,8 +1,9 @@
 import Link from "next/link";
 import MyPagesSection from "../components/MyPagesSection";
 
-const feedbackHref =
-  "mailto:alphanicks1@gmail.com?subject=Feedback%20do%20site&body=Oi!%20Quero%20deixar%20um%20feedback%20sobre%20o%20site.";
+const feedbackEmail = "alphanicks1@gmail.com";
+const gmailHref =
+  "https://mail.google.com/mail/?view=cm&fs=1&to=alphanicks1@gmail.com&su=Feedback%20do%20site&body=Oi!%20Quero%20deixar%20um%20feedback%20sobre%20o%20site.";
 
 export default function HomePage() {
   return (
@@ -144,13 +145,27 @@ export default function HomePage() {
             Seu feedback ajuda a deixar a ferramenta melhor e mais simples de usar.
           </p>
 
-          <div className="mt-8 flex justify-center">
+          <p className="mt-6 text-sm text-zinc-500">
+            E-mail para feedback: {feedbackEmail}
+          </p>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <a
-              href={feedbackHref}
+              href={gmailHref}
+              target="_blank"
+              rel="noreferrer"
               className="rounded-2xl bg-green-500 px-6 py-4 text-center text-base font-semibold text-black transition hover:opacity-90"
             >
-              Enviar feedback
+              Abrir Gmail
             </a>
+
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(feedbackEmail)}
+              className="rounded-2xl border border-zinc-700 px-6 py-4 text-center text-base font-medium transition hover:bg-zinc-800"
+            >
+              Copiar e-mail
+            </button>
           </div>
         </div>
       </section>
